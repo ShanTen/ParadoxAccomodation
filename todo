@@ -1,0 +1,40 @@
+1. Create 3 navigation options/buttons for the user to select from. -- done
+    - Home 
+    - QR Scanner 
+    - Settings
+
+2. Create a directory called "Screens" inside (tabs) folder. -- ignore
+    - Create 3 files inside the "Screens" folder.
+        - HomeScreen.js
+        - QRScannerScreen.js
+        - SettingsScreen.js
+
+3. Finish Upcoming Student Scroll View. -- done
+4. Finish Accommodator Profile Page -- done
+5. Rename variables -- done
+
+BIG TODO:
+    SET UP STACK NAVIGATOR SUCH THAT THE USER CAN NAVIGATE BETWEEN THE 3 (OR MORE) SCREENS
+
+6. Make sure app compiles with correct name
+7. Implement GetUpcomingStudents function to simulate API call and implement a useEvent hook for it
+
+Notes:
+1. Edit navigation settings and config in ./app/(tabs)/_layouts.tsx
+2. Do all code only in ./app/(tabs)/*
+    - Note on Why: This is to keep the code organized and clean. 
+    - Tree of This working Env is cleaner than what the expo generate code provides.
+3. Dont remove the code In /App at App root level.
+    - This is used to render the HTMl view of the app.
+
+Working Env (ParadoxAccommodation/App)
+ App
+├──  CommonComponents
+├──  Screens
+│   └──  HandleSupplies.jsx
+├──  _layout.tsx
+├──  AccommodatorSettings.tsx
+├──  Home.tsx
+└──  index.tsx
+
+Root App is node_modules\expo\AppEntry.js 

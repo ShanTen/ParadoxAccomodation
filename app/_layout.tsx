@@ -4,7 +4,6 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-
 import { useColorScheme } from '@/components/useColorScheme';
 
 export {
@@ -12,9 +11,11 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
+
+// The initial route name is set to 'LoginScreen'. 
+//maybe set this logic here when you conditionally load while checking if you're logged in
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: 'LoginScreen',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -50,8 +51,8 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} initialParams={{apiRoute: 'teynampet'}}/>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );
