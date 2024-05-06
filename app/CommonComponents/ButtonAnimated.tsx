@@ -7,16 +7,39 @@ type ButtonAnimatedProps = {
     onPress: any,
     style: any,
     animatedViewStyle: any;
+    isDisabled?: boolean;
 }
 
 type ButtonLabelProps = {
     label: string,
     onPress: any,
     style: any,
-    animatedViewStyle: any;
+    animatedViewStyle: any,
+    isDisabled?: boolean;
 }
 
-export function ButtonAnimatedWithChild({ child, onPress, style, animatedViewStyle} : ButtonAnimatedProps) {
+function getDisabledColor(hex : string | any) {
+  // Check if the input is a valid hex code
+  if (!/^#[0-9A-F]{6}$/i.test(hex)) {
+    return null;
+  }
+
+  // Convert the hex string to RGB values (0-255)
+  const rgb = hex.slice(1).match(/.{2}/g).map((c : any) => parseInt(c, 16));
+
+  // Reduce the contrast by lowering the luminosity
+  for (let i = 0; i < 3; i++) {
+    rgb[i] = Math.floor(rgb[i] * 0.6);
+  }
+
+  // Convert the adjusted RGB values back to hex format
+  const disabledHex = `#${rgb.map((x : any) => x.toString(16).padStart(2, "0")).join("")}`;
+
+  return disabledHex;
+}
+
+
+export function ButtonAnimatedWithChild({ child, onPress, style, animatedViewStyle, isDisabled} : ButtonAnimatedProps) {
     const [opacity] = useState(new Animated.Value(1));
 
     const handlePressIn = () => {
@@ -39,7 +62,8 @@ export function ButtonAnimatedWithChild({ child, onPress, style, animatedViewSty
       return (<Pressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-        style={{ ...styles.UpcomingPressable, ...style }}
+      style={{ ...styles.UpcomingPressable, ...style }}
+      disabled={isDisabled}
     >
     <Animated.View style={{ ...styles.Container, opacity, ...animatedViewStyle }}>
         {child}
@@ -47,13 +71,25 @@ export function ButtonAnimatedWithChild({ child, onPress, style, animatedViewSty
     </Pressable>)
 }
 
-export function ButtonAnimatedWithLabel({ label, onPress, style, animatedViewStyle} : ButtonLabelProps) {
+export function ButtonAnimatedWithLabel({ label, onPress, style, animatedViewStyle, isDisabled} : ButtonLabelProps) {
+
+  let styleDisabled = null;
+  if (isDisabled) {
+    styleDisabled = {
+      backgroundColor: getDisabledColor(
+        animatedViewStyle.backgroundColor || "#069A8E"
+      ),
+      color: getDisabledColor(animatedViewStyle.backgroundColor || "#069A8E"),
+    };
+  }
+
     return (
         <ButtonAnimatedWithChild
         child={<Text style={styles.Text}>{label}</Text>}
         onPress={onPress}
         style={style}
-        animatedViewStyle={animatedViewStyle}
+        animatedViewStyle={styleDisabled || animatedViewStyle}
+        isDisabled={isDisabled}
         />
     )
 }

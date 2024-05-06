@@ -1,11 +1,10 @@
-/*
-  Expo Go's QR Scanner Screen Implementation for Accommodator App
+/*Expo Go's QR Scanner Screen Implementation for Accommodator App
 
     ToDo:
     - Overhaul their state object and create my own state implementations -- done
     - Can also remove all platform unifying code (ios being a bitch code basically), -- done 
         because target users are only android  
-    - Add a stack navigator for this page only => StackNavSupplyHandle
+    - Add a stack navigator for this page only => StackNavSupplyHandle --done
         Parts:
           - QR Scanner (Home)
           - HandleSupplies (Home -> OTP Supplies)
@@ -19,9 +18,14 @@ import * as BarCodeScanner from 'expo-barcode-scanner';
 import { BlurView } from 'expo-blur';
 import { FlashMode } from 'expo-camera';
 import { throttle } from 'lodash';
-import React from 'react';
-import { Alert, Linking, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { StatusBar, StyleSheet, Text, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
+
+import apiRoute from '../../apiRoute';
+import { getValueFor } from '../../ExpoStoreUtils';
+import axios from 'axios';
 
 import { Camera } from '../CommonComponents/Camera';
 import QRFooterButton from '../CommonComponents/QRFooterButton';
@@ -66,60 +70,67 @@ function Hint({ children }: { children: string }) {
 
 function BarCodeScreen({ navigation }: { navigation: any }) {
   const [isVisible , setIsVisible] = React.useState(false)
-  const [url , setUrl] = React.useState<string | null>(null)
+  const [QRid , setQRid] = React.useState<string | null>(null)
   const [mountKey, setMountKey] = React.useState(0); //camera hack to force remount
-  
   const [isLit, setLit] = React.useState(false);
 
-  React.useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-    // InstanceOf : [state]
-    if (!isVisible) {
-      timeout = setTimeout(() => {
-        setIsVisible(true);
-      }, 800);
-    }
-    return () => {
-      clearTimeout(timeout);
-    };
+  //Initial render only
+  useEffect(() => {
+    setMountKey(mountKey + 1);
   }, []);
 
+  //Subsequent focus renders
+  useFocusEffect(React.useCallback(() => {
+    setMountKey(mountKey + 1);
+  }, []));
+
   React.useEffect(() => {
-    if (!isVisible && url) {
+    if (!isVisible && QRid) {
       console.log("QR Code Scanned")
-      //NAV :: Move to Next Screen
-      navigation.navigate('HandleSupplies', {QRid: url});
+      //sending to server 
+      getValueFor('token').then((token) => {
+
+        let headers ={
+          Authorization : `Bearer ${token}`
+        }
+
+        axios.get(`${apiRoute}/accommodation/qr/${QRid}`, {headers})
+          .then(
+            response => {
+              navigation.navigate('HandleSupplies', { QRid });
+            }
+          )
+          .catch((err) => {
+            console.log("An error occurred while sending QRid to server")
+            console.log(err)
+            const isLikeQR = (id: string) => {
+              const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+              return uuidPattern.test(id);
+            }
+
+            if(!isLikeQR(QRid)){
+              Alert.alert("Invalid QR code", "Please scan a valid QR code")
+              return;
+            }
+
+            Alert.alert("Error", "An error occurred while sending QRid to server. Please try again.")    
+          })
+      })      
     }
-  }, [isVisible, url]);
+  }, [isVisible, QRid]);
 
   // InstanceOf : [state]
   const _handleBarCodeScanned = throttle(({ data: _url }) => {
     console.log("Scanned URL: ", _url)
-    setUrl(_url);
+    setQRid(_url);
     setIsVisible(false);
   }, 1000);
-
-  const openUrl = (_url: string) => {
-    // InstanceOf : [props.navigation]
-    // props.navigation.pop();
-
-    setTimeout(
-      () => {
-        // note(brentvatne): Manually reset the status bar before opening the
-        // experience so that we restore the correct status bar color when
-        // returning to home
-        StatusBar.setBarStyle('default');
-        Linking.openURL(_url);
-      },
-      Platform.select({default: 500,})
-    );
-  };
 
   // InstanceOf : [props.navigation]
   const onCancel = React.useCallback(() => {
     console.log("Action Cancelled")
     //clear all states
-    setUrl(null);
+    setQRid(null);
     setIsVisible(true);
     //unmount camera
     setMountKey((key) => key + 1);

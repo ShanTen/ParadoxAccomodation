@@ -16,4 +16,8 @@ async function getValueFor(key : string) {
     }
 }
 
+async function removeKey(key : string) {
+    await SecureStore.deleteItemAsync(key);
+}
+
 export { save, getValueFor };

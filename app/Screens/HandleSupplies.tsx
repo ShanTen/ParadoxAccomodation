@@ -1,24 +1,27 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// Import Modules and Libraries /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////
-import { StyleSheet, ScrollView, Alert } from 'react-native';
+import { StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useState, useEffect } from 'react';
 import { Dimensions } from 'react-native';
 import { save, getValueFor } from "../../ExpoStoreUtils";
+import {Link} from 'expo-router';
 
 import axios from 'axios';
 import apiRoute from '../../apiRoute';
 
 import ProfileBar from '../CommonComponents/ProfileBar';
 import {ButtonAnimatedWithLabel} from '../CommonComponents/ButtonAnimated';
+import SupplyDisplay from '../CommonComponents/SelectableButtonArray';
+import Title from '../CommonComponents/PageTitle';
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// Custom Types  Supplies Page ////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////
-
 //static -- Only GET
 type StudentProfile = {
+    id: number;
     profileName: string;
     profilePicture: string;
     uniqueID: string;
@@ -35,7 +38,6 @@ type SupplyItem = {
 type SuppliesObject = {
     items: SupplyItem[];
 }
-
 //static -- Only GET
 type AccommodationInfo = {
     hostelName: string;
@@ -52,121 +54,6 @@ type CheckInCheckOutInfo = {
     checkOutStatus: boolean;
     checkOutTime: number | null;
 }
-
-//Simulates bad redux code which is basically just regular redux code 
-const initialCheckingValue: CheckInCheckOutInfo = {
-    checkInStatus: false,
-    checkInTime: null,
-    checkOutStatus: false,
-    checkOutTime: null
-}
-
-var Global = {
-    QRid: "1N33D2P155",
-    Profile: {
-        profileName: "Ajay Bala",
-        profilePicture: "https://ui-avatars.com/api/?name=Ajay+Bala&?background=000000&color=0D8ABC&?format=svg?size=256",
-        uniqueID: "20f1000069",
-    },
-    SuppliesObject: {
-        items: [
-            { itemName: "Bedding", isProvided: false, isReturned: false },
-            { itemName: "Toiletries", isProvided: false, isReturned: false },
-            { itemName: "Stationery", isProvided: false, isReturned: false },
-            { itemName: "Clothes", isProvided: false, isReturned: false },
-            { itemName: "Books", isProvided: false, isReturned: false },
-            { itemName: "Medicines", isProvided: false, isReturned: false },
-        ]
-    },
-    AccommodationInfo: {
-        hostelName: "Saraswati Hostel",
-        hostelRoomNumber: 69,
-        messName: "Saraswati Mess",
-        messFloor: 1,
-        messCaterer: "Ramesh"
-    },
-    CheckingInfo: initialCheckingValue
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////// API Calls for Supplies Page ////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-    Required fake API Calls
-        - Get Student Profile (QRid from qr-code)
-            - Name
-            - Profile Picture
-            - ID
-        - Get Supplies (studentID)
-            - Items Array (Item Name, isProvided, isReturned)
-        
-        - Get Accommodation Info (studentID)
-            - Hostel Info: Name
-            - Hostel Info: Room Number
-            - Mess Info: Name
-            - Mess Info: Room Number
-        
-        - Get CheckInCheckOutStatus (studentID)
-            - CheckIn Status
-            - CheckIn Time [date-time or null]
-            - CheckOut Status
-            - CheckOut Time [date-time or null]
-*/
-
-async function getStudentProfile(QRid: string | null) {
-    //throw error saying "Null value for QRid"
-    if (QRid == null)
-        throw new Error("QRid is NULL")
-
-    console.log(`Fetching Student Profile for id [${QRid}]`)
-    return Global.Profile;
-}
-
-async function getSupplies(studentID: string) {
-    console.log(`Fetching Supplies for Student ID [${studentID}]`)
-
-    let _token = await getValueFor('ACCESS_TOKEN');
-    console.log(_token)
-    
-
-    let headers = {
-        Authorization: `Bearer ${_token}`
-    }
-
-    try {
-        const response = await axios.get(`${apiRoute}/accommodation/supply/all`, {headers})
-        console.log(response.data)
-    }
-    catch (error) {
-        console.error(error);
-    }
-    
-    return Global.SuppliesObject;
-}
-
-async function getAccommodationInfo(studentID: string) {
-    console.log(`Fetching Accommodation Info for Student ID [${studentID}]`)
-    return Global.AccommodationInfo;
-}
-
-async function getCheckInCheckOutStatus(studentID: string) {
-    console.log(`Fetching CheckInCheckOut Status for Student ID [${studentID}]`)
-    return Global.CheckingInfo;
-}
-
-async function updateCheckInCheckOutStatus(studentID: string, checkInStatus: boolean, checkOutStatus: boolean) {
-    console.log(`Updating Checking Status for Student ID [${studentID}]`)
-    console.log(`Setting CheckIn Status to [${checkInStatus}] and CheckOut Status to [${checkOutStatus}]`)
-
-    if (checkInStatus)
-        Global.CheckingInfo.checkInTime = getCurrentEpochTimeMS();
-    if (checkOutStatus)
-        Global.CheckingInfo.checkOutTime = getCurrentEpochTimeMS();
-
-    return Global.CheckingInfo;
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// Helper Functions and Components ////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,57 +92,277 @@ function HostelInfo({ Name, RoomNum }: { Name: string, RoomNum: number }) {
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 export default function HandleSuppliesPage({ route, navigation }: { route: any, navigation: any }) {
+
     const [QRid, setQRid] = useState<string | null>(null);
     const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-    const [listOfSupplies, setListOfSupplies] = useState<SuppliesObject | null>(null);
     const [accommodationInfo, setAccommodationInfo] = useState<AccommodationInfo | null>(null);
     const [checkInCheckOutInfo, setCheckInCheckOutInfo] = useState<CheckInCheckOutInfo | null>(null);
+    const [token, setToken] = useState<string | null>(null);
 
-    const [checkInCheckOutButtonText, setCheckInCheckOutButtonText] = useState<string>("Check In");
+    const [showCheckIn, setShowCheckIn] = useState<boolean>(false);
+    const [showCheckOut, setShowCheckOut] = useState<boolean>(false);
 
-    // Update QRid when route.params.QRid changes
-    useEffect(() => {
-        console.log(`In Handle Supplies, QRid: ${route.params.QRid}`)
+    const [showCheckInSuppliesButton, setShowCheckInSuppliesButton] = useState<boolean>(false);
+    const [showCheckOutSuppliesButton, setShowCheckOutSuppliesButton] = useState<boolean>(false);
+
+    const [allSupplies, setAllSuppliesSupplies] = useState<any>([]);
+    const [checkInSupplies, setCheckInSupplies] = useState<any>([]);
+    const [checkOutSupplies, setCheckOutSupplies] = useState<any>([]);
+
+    const [OTPTransferObject, setOTPTransferObject] = useState<any>(null);
+    
+    function getProvidedItems(supplies : any){
+        //if provided items are none, it returns an empty array
+
+        let providedItems = supplies.filter((item : any) => {
+            return item["isProvided"]
+        })
+
+        // console.log("Provided Items are: ")
+        // console.log(providedItems)
+
+        return providedItems;
+    }
+
+    function getNonProvidedItems(supplies : any){
+        //if provided items are none, it returns an empty array
+
+        let nonProvidedItems = supplies.filter((item : any) => {
+            return !item["isProvided"]
+        })
+
+        return nonProvidedItems;
+    }
+
+    async function getAllInfo(QRid : string){
+        let _token = await getValueFor('token');
+        let headers ={Authorization : `Bearer ${_token}`}    
+        try{
+            let profile_buffer = (await axios.get(`${apiRoute}/accommodation/qr/${QRid}`, {headers})).data;
+            let checkInCheckOutStatus = (await axios.get(`${apiRoute}/accommodation/student/${profile_buffer.id}/checkin/status`, {headers})).data;
+            let supplies = (await axios.get(`${apiRoute}/accommodation/student/${profile_buffer.id}/supply/status`, {headers})).data
+            let hostelInfoClump = (await axios.get(`${apiRoute}/accommodation/student/id/${profile_buffer.id}`, {headers})).data;
+            let checkoutStatus = (await axios.get(`${apiRoute}/accommodation/student/${profile_buffer.id}/cancheckout/`, {headers})).data;
+            
+            //console.log("checkInCheckOutStatus is")
+            //console.log(checkInCheckOutStatus)
+
+
+            let AccommodationInfo = {
+                hostelName: hostelInfoClump["Hostel Info"]["Name"],
+                hostelRoomNumber: hostelInfoClump["Hostel Info"]["Room Number"],
+                messName: hostelInfoClump["Mess Info"]["Name"],
+                messFloor: hostelInfoClump["Mess Info"]["Floor"],
+                messCaterer: hostelInfoClump["Mess Info"]["Caterer"],
+            }
+
+            let Profile = {
+                id: profile_buffer.id,
+                profileName: profile_buffer.name,
+                profilePicture: `https://ui-avatars.com/api/?name=${profile_buffer.name.split(" ").join("+")}&?background=000000&color=0D8ABC&?format=svg?size=256`,
+                uniqueID: profile_buffer["email"].split('@')[0],
+            }
+
+            let CheckInCheckOutInfo = {
+                checkInStatus: checkInCheckOutStatus["CheckIn"],
+                checkInTime: parseInt(checkInCheckOutStatus["CheckIn Time"]),
+                checkOutStatus: checkInCheckOutStatus["CheckOut"],
+                checkOutTime: parseInt(checkInCheckOutStatus["CheckOut Time"]),
+            }
+
+            let supplyData = supplies.map((item : any) => {
+                return {
+                    id: item["Item ID"],
+                    txt: item["Item Name"],
+                    isProvided: item["isProvided"],
+                    isReturned: item["isReturned"],
+
+                    //UI States 
+                    isChecked: false,
+                    isDisabled: false,
+                }
+            })
+
+            // console.log(supplyData)
+
+            //show these supplies in the check in supplies section
+            let _checkInSupplies = supplyData;
+            let _checkOutSupplies = supplyData;
+
+            //NOTE: Disabling a checkbox only happens on page load
+            //disable and check all the provided items 
+            _checkInSupplies = _checkInSupplies.map((item : any) => {
+                if(item["isProvided"]){
+                    // console.log("Apparently, this item is provided")
+                    // console.log(item)
+                    return {...item, isChecked: true, isDisabled: true}
+                }
+                    
+                else
+                    return item;
+            })
+
+            // disable + check = all items that are provided and returned
+            // disable = all items that are not provided and not returned
+            _checkOutSupplies = _checkOutSupplies.map((item : any) => {
+                if(item["isProvided"] && item["isReturned"]){
+                    // console.log("Below item has been provided and returned")
+                    // console.log(item)
+                    return {...item, isChecked: true, isDisabled: true}
+                }
+                else if(!item["isProvided"]){
+                    // console.log("Below item has been provided only")
+                    return {...item, isDisabled: true}
+                }
+                return item;
+            });
+
+            //disable all items when user is checked out
+            if(CheckInCheckOutInfo.checkOutStatus){
+                console.log("INESFOISNDFKLSDNFKSDJNFKSDJNFPSKJDNFKSDJNV FSKDJ FKSDJ")
+
+                _checkInSupplies = _checkInSupplies.map((item : any) => {
+                    return {...item, isDisabled: true}
+                });
+                _checkOutSupplies = _checkOutSupplies.map((item : any) => {
+                    return {...item, isDisabled: true}
+                });
+            }
+
+            setToken(_token);
+            setStudentProfile(Profile);
+            setAccommodationInfo(AccommodationInfo);
+            setCheckInCheckOutInfo(CheckInCheckOutInfo);
+
+            setAllSuppliesSupplies(supplyData);
+            setCheckInSupplies(_checkInSupplies);
+            setCheckOutSupplies(_checkOutSupplies);
+
+            if(!CheckInCheckOutInfo.checkInStatus && !CheckInCheckOutInfo.checkOutStatus)
+                setShowCheckIn(true);
+
+            if(CheckInCheckOutInfo.checkInStatus && !CheckInCheckOutInfo.checkOutStatus){
+                setShowCheckInSuppliesButton(true);
+            }
+
+            if(checkoutStatus["canCheckOut"]){
+                setShowCheckOut(true);
+            }
+        }
+        catch(err){
+            console.log(err)
+            throw new Error("Error in fetching all information");
+        }
+    }
+
+    // Run on Page Load
+    useEffect(() => {        
         setQRid(route.params.QRid);
-    }, [route.params.QRid]); 
+    }, []); 
 
     useEffect(() => {
-        if (QRid != null) {
-            getStudentProfile(QRid).then((data) => {
-                setStudentProfile(data);
+        if(QRid != null){
+            getAllInfo(QRid).then(() => {
+                console.log("All Info Fetched")
             }).catch((err) => {
                 console.log(err)
             })
         }
-    }, [QRid]); // Fetch Student Profile when QRid changes
+    }, [QRid]);         
 
-    // Fetch Supplies, Accommodation Info and CheckInCheckOut Status when Student Profile is fetched
     useEffect(() => {
-        if (studentProfile != null) {
-            getSupplies(studentProfile.uniqueID).then((data) => {
-                setListOfSupplies(data);
-            }).catch((err) => {
-                console.log(err)
-            })
 
-            getAccommodationInfo(studentProfile.uniqueID).then((data) => {
-                setAccommodationInfo(data);
-            }).catch((err) => {
-                console.log(err)
-            })
-
-            getCheckInCheckOutStatus(studentProfile.uniqueID).then((data) => {
-                setCheckInCheckOutInfo(data);
-            }).catch((err) => {
-                console.log(err)
-            })
+        if(!checkInCheckOutInfo){
+            return
         }
-    }, [studentProfile]);
+        //show the checkIn Supplies Button if the student has checked in and not checked out
+        if(checkInCheckOutInfo.checkInStatus && !checkInCheckOutInfo.checkOutStatus){
+            setShowCheckInSuppliesButton(true);
+            setShowCheckIn(false);
+        }
+
+
+    }, [checkInCheckOutInfo])
+
+    //For all changes to transferObject
+    useEffect(()=>{
+        if(!checkInSupplies)
+            return
+        let buffer = {
+            'QRid' : QRid,
+            'token' :token,
+            'studentProfile' : studentProfile,
+            'supplies' : checkInSupplies,
+        }
+        setOTPTransferObject(buffer)
+    }, [checkInSupplies])
+
+    useEffect(()=>{
+        if(!checkOutSupplies)
+            return
+        let buffer = {
+            'QRid' : QRid,
+            'token' :token,
+            'studentProfile' : studentProfile,
+            'supplies' : checkOutSupplies,
+        }
+        setOTPTransferObject(buffer)
+    }, [checkOutSupplies])
+
+    useEffect(()=>{
+        if(!OTPTransferObject)
+            return
+        console.log("Saving OTP Transfer Object")
+        save('OTP_TRANSFER_OBJ', JSON.stringify(OTPTransferObject)).then(
+            () => console.log("OTP Transfer Object Saved")
+        )
+    }, [OTPTransferObject])
+
+    const handleCheckInSuppliesChange = (id : number) => {
+        let temp = checkInSupplies.map(((supply : any) => {
+            if(id === supply.id){
+                return {...supply, isChecked: !supply.isChecked}
+            }
+            return supply;
+        }))
+        setCheckInSupplies(temp);
+    }
+
+    const handleCheckOutSuppliesChange = (id : number) => {
+        let temp = checkOutSupplies.map(((supply : any) => {
+            if(id === supply.id){
+                return {...supply, isChecked: !supply.isChecked}
+            }
+            return supply;
+        }))
+        setCheckOutSupplies(temp);
+    }
+
+    const makeCheckInRequest = async () => {
+
+        if(studentProfile && token){
+            let headers ={
+                Authorization : `Bearer ${token}`
+              }
+
+            let body = {}
+            let id = studentProfile.id;
+            
+            try{                            
+                await axios.put(`${apiRoute}/accommodation/student/${id}/checkin/`, {} ,{ headers });
+                setCheckInCheckOutInfo({...checkInCheckOutInfo, checkInStatus: true, checkInTime: getCurrentEpochTimeMS(), checkOutStatus: false, checkOutTime: null});
+            }
+            catch(err){
+                console.log(err);
+                Alert.alert("Error", "Check In Failed")
+            }
+        }        
+    }
 
     return (<View style={Styles.container} >
-        <Text style={Styles.title}>Handle Supplies</Text>
-        <View style={Styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+        <Title value="Handle Supplies" />
         <ScrollView contentContainerStyle={Styles.ScrollContainer}>
+        <Link href='/Screens/HandleSupplies'></Link>
 
         {studentProfile && <ProfileBar profilePicture={studentProfile.profilePicture} profileName={studentProfile.profileName} uniqueID={studentProfile.uniqueID} />}
 
@@ -269,20 +376,6 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
                     <Text style={Styles.paragraphDisplayText}>Check Out Time: {checkInCheckOutInfo.checkOutTime ? epochToHuman(checkInCheckOutInfo.checkOutTime) : "Not Checked Out"}</Text>
         </View>}
 
-        {listOfSupplies && <View style={Styles.splitParagraphContainer}>
-            <Text style={Styles.splitParagraphTitle}>Supplies</Text>
-            {listOfSupplies.items.map((item, index) => {
-                return (
-                    <View key={index} style={Styles.splitParagraphContentContainer}>
-                        <Text style={Styles.splitParagraphContent_Key}>{item.itemName}</Text>
-                        <Text style={Styles.splitParagraphContent_Value}>
-                            {item.isProvided ? (item.isReturned ? "Returned" : "Provided") : "Not Provided"}
-                        </Text>
-                    </View>
-                )
-            })}
-        </View>}
-
         {accommodationInfo && <View style={Styles.paragraphDisplayContainer}>
             <Text style={Styles.paragraphDisplayTitle}>Mess Info</Text>
             <Text style={Styles.paragraphDisplayText}>Name: {accommodationInfo.messName}</Text>
@@ -290,23 +383,164 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
             <Text style={Styles.paragraphDisplayText}>Caterer: {accommodationInfo.messCaterer}</Text>
         </View>}
 
-        <ButtonAnimatedWithLabel label="Check In"
+        {/* Conditionally rendered CheckIN Button */}
+        {(showCheckIn) && <ButtonAnimatedWithLabel 
+                label={"Check In"} 
+                animatedViewStyle={{}} 
+                style={{}} 
+                onPress={() => {
+                    Alert.alert("Check In", "Are you sure you want to check in the lodger?", [
+                        {
+                            text: "Yes",
+                            onPress: async () => {
+                                await makeCheckInRequest();
+                            }
+                        },
+                        {
+                            text: "No",
+                            onPress: () => {
+                                console.log("Check In Cancelled")
+                            }
+                        }
+                    ])
+                }} 
+            />}
+
+        {/* Conditionally rendered CheckIN Supplies Checkbox Array*/}
+        {((checkInSupplies.length) > 0) && <View style={Styles.splitParagraphContainer}>
+            <Text style={Styles.splitParagraphTitle}>Check In Supplies</Text>
+
+            <SupplyDisplay supplies={checkInSupplies} handleChange={handleCheckInSuppliesChange} /> 
+
+            {(showCheckInSuppliesButton) && < ButtonAnimatedWithLabel label={"Request OTP"}
             onPress={() => {
-                if(studentProfile) 
+                Alert.alert("Confirmation", "Are you sure you want to request the OTP?", [{
+                    "text": "Yes",
+                    onPress: async () => {
+
+                        try
+                        {
+                            if(OTPTransferObject) {
+                                await save('mode', "give");
+                                navigation.navigate('OTPSupply');
+                                }
+                            else 
+                                Alert.alert("Error", "Student Profile not found")
+                        }
+                        catch(err)
+                        {
+                            console.log("Error in saving OTP object")
+                            console.log(err);
+                        }
+                    }
+                }, 
                 {
-                    //Change this to expo router navigator?
-                    navigation.navigate('OTPSupply', {QRid: studentProfile.uniqueID});
-                    //setCheckInCheckOutInfo({...checkInCheckOutInfo, checkInStatus: true, checkInTime: getCurrentEpochTimeMS(), checkOutStatus: false, checkOutTime: null});
-                    //Have to update server before state change
-                }
-                else{
-                    Alert.alert("Error", "Student Profile not found")
-                }
-                   
+                    "text": "No",
+                    style: "cancel",
+                    onPress: () => {
+                        console.log("OTP Cancelled")
+                    }
+                }])
             }}
-            style={{  margin: 20 }}
+            style={{}}
             animatedViewStyle={{ backgroundColor: '#069a8e' }}
-        />
+            //disabled when all items are returned
+            isDisabled={
+                getNonProvidedItems(checkInSupplies).length === 0 && (checkInCheckOutInfo?.checkInStatus === true) && (checkInCheckOutInfo?.checkOutStatus === false)
+            }
+        />}
+        </View>}
+
+        {/* Conditionally rendered CheckOut Supplies Checkbox Array*/}
+        {((checkOutSupplies.length) > 0) && <View style={Styles.splitParagraphContainer}>
+            <Text style={Styles.splitParagraphTitle}>Check Out Supplies</Text>
+            <SupplyDisplay supplies={checkOutSupplies} handleChange={handleCheckOutSuppliesChange} />
+            {(checkInCheckOutInfo?.checkOutStatus === false) && (getProvidedItems(checkInSupplies).length !== 0) && < ButtonAnimatedWithLabel label={"Request OTP"}
+            onPress={async () => {
+                
+                Alert.alert("Confirmation", "Are you sure you want to request the OTP?", [{
+                    "text": "Yes",
+                    onPress: async () => {
+
+                        try
+                        {
+                            if(OTPTransferObject) {
+                                await save('mode', "return");
+                                navigation.navigate('OTPSupply');
+                                }
+                            else 
+                                Alert.alert("Error", "Student Profile not found")
+                        }
+                        catch(err)
+                        {
+                            console.log("Error in saving OTP object")
+                            console.log(err);
+                        }
+                    }
+                }, 
+                {
+                    "text": "No",
+                    style: "cancel",
+                    onPress: () => {
+                        console.log("OTP Cancelled")
+                    }
+                }])
+
+                
+            }}
+            style={{}}
+            animatedViewStyle={{ backgroundColor: '#fa8b05' }}
+            //is disabled when there are no provided items or when the number of non-provided items is 0
+            isDisabled={
+                !(getProvidedItems(checkInSupplies).length !== 0) || getNonProvidedItems(checkInSupplies).length === 0
+            }
+        />}
+        </View>}
+
+        {(showCheckOut && (checkInCheckOutInfo?.checkOutStatus === false)) && <ButtonAnimatedWithLabel
+            animatedViewStyle={{backgroundColor: "#9a0612"}} 
+            style={{marginTop: 10}} 
+            label={"Check Out"}
+            onPress={() => {
+                Alert.alert("Check Out", "Are you sure you want to check out the lodger?", [
+                    {
+                        text: "Yes",
+                        onPress: async () => {
+                            console.log("Checking Out...")
+                            if(studentProfile && token){
+                                let id = studentProfile?.id;
+                                let headers = {Authorization : `Bearer ${token}`}
+                                try{
+                                    let response = (await axios.put(`${apiRoute}/accommodation/student/${id}/checkout/`, {}, {headers})).data;
+                                    console.log("Log out response is")
+                                    console.log(response)
+                                    navigation.navigate('Home');
+                                }
+                                catch(err){
+                                    console.log(err);
+                                    Alert.alert("Error", "Check Out Failed")
+                                }
+                            }
+                        }
+                    },
+                    {
+                        text: "No",
+                        onPress: () => {
+                            console.log("Check Out Cancelled")
+                        }
+                    }
+                ])
+            }}
+        >
+        </ButtonAnimatedWithLabel>}
+
+        {
+            (checkInCheckOutInfo?.checkOutStatus === true) && <Text
+                style={{marginTop: 10, color: 'red', fontSize: 16, fontWeight: 'bold'}}
+            >
+                Lodger has already been checked out
+                </Text>
+        }
 
         </ScrollView>
     </View>)
@@ -328,6 +562,7 @@ const Styles = StyleSheet.create({
         alignItems: 'center',
         alignContent: 'center',
         width: Math.floor(screenWidth),
+        paddingVertical: 10,
     },
     title: {
         marginTop: 60,
@@ -370,7 +605,7 @@ const Styles = StyleSheet.create({
         marginTop: 20,
         alignItems: 'flex-start',
         justifyContent: 'flex-start',
-        padding: 20,
+        padding: 10,
         borderRadius: 10,
         backgroundColor: '#1E1E1E',
 

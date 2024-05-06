@@ -87,8 +87,6 @@ export default function Login() {
                     console.log(err);
                     console.log("Ignore the above error, you are in the mounting phase.")
                 })
-
-
             });
 
             /* At this point, the "token" in secure store is either undefined or ''
@@ -141,7 +139,7 @@ export default function Login() {
             //Debug Code : Remove this after integrating with backend
             var passObj = {apiRoute , accessToken};
             Toast.success('Login Successful', 'top');
-            setTimeout(() => router.navigate('(tabs)'), 2000); //completely unnecessary but looks kinda cool
+            setTimeout(() => router.navigate('(tabs)'), 800); //completely unnecessary but looks kinda cool
         }
     }, [isLoginSuccess])
 
@@ -191,23 +189,23 @@ export default function Login() {
             {/* {showError && <Text style={styles.errorText}>Invalid username or password</Text>} */}
 
             <ToastManager 
-            duration={4000}
-            position="bottom" 
-            textStyle={{
-                fontSize: 14,
-                fontWeight: 'bold',
-                textAlign: 'center',
-            }}
-            style={
-                {
-                    marginBottom: 20, 
-                    marginTop: 40
+                duration={4000}
+                position="bottom" 
+                textStyle={{
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                }}
+                style={
+                    {
+                        marginBottom: 20, 
+                        marginTop: 40
+                    }
                 }
-            }
-            width={325}
-            animationStyle="rightInOut"
-            positionValue={0}
-                />
+                width={325}
+                animationStyle="rightInOut"
+                positionValue={0}
+            />
         </View>
     );
 }

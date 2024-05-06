@@ -2,13 +2,13 @@ import { StyleSheet } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useState, useEffect } from 'react';
 import {router} from 'expo-router';
-import axios from 'axios';
-
 import { ButtonAnimatedWithChild } from '../CommonComponents/ButtonAnimated';
 import ProfileBar from '../CommonComponents/ProfileBar';
+import Title from '../CommonComponents/PageTitle';
+import axios from 'axios';
 import apiRoute from '../../apiRoute';
-
 import { save, getValueFor } from '../../ExpoStoreUtils';
+import ToastManager, { Toast } from 'toastify-react-native'
 
 function HostelDetails({names, totalStudents, studentsCheckedIn} : {names: string[], totalStudents: number, studentsCheckedIn: number}){
   return (
@@ -51,8 +51,11 @@ export default function AccommodatorScreen() {
           let {name, email, hostels} = response.data;
           let uniqueID = email.split('@')[0];
 
+
+
           setVolunteerDetails({
-            profileName: name,
+            // profileName: name,
+            profileName: "Shantanu Kumar",
             profilePicture: `https://ui-avatars.com/api/?name=${name.split(' ').join('+')}&?background=000000&color=0D8ABC&?format=svg?size=256`,
             uniqueID,
           });
@@ -70,38 +73,46 @@ export default function AccommodatorScreen() {
   }, [])
   
   const logout = async () => {
-    await save('logout', 'yes');
-    router.navigate('/');
+    try{
+      // Toast.info('Logging Out...', 'Top');
+      await save('logout', 'yes');
+      router.navigate('/');
+    }
+    catch(e){
+      console.log(e);
+      Toast.error('An error occurred while logging out', 'Top');
+    }
+
   }
 
   return (
     <View style={Styles.container}>
-
       <View>
-        <Text style={Styles.title}>Volunteer Details</Text>
-        <View style={Styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
+        <Title value="Volunteer Details" />
       </View>
 
-      <ProfileBar 
+      <ProfileBar
         profilePicture={volunteerDetails.profilePicture}
         profileName={volunteerDetails.profileName}
-        uniqueID={volunteerDetails.uniqueID}
-      />
+        uniqueID={volunteerDetails.uniqueID}>
+      </ProfileBar>
 
-      <HostelDetails 
+      <HostelDetails
         names={hostelDetails.names}
         totalStudents={hostelDetails.totalStudents}
         studentsCheckedIn={hostelDetails.studentsCheckedIn}
-      />
+      >
+      </HostelDetails>
 
-      <ButtonAnimatedWithChild 
-        child={<Text style={{color: 'white'}}>Log out</Text>}
-        onPress={logout}
-        style={null}
-        animatedViewStyle={{backgroundColor: '#9a0612'}}
-      />      
-
-    </View>
+      <View style={Styles.logOutButtonContainer}>
+        <ButtonAnimatedWithChild 
+          child={<Text style={{color: 'white'}}>Log out</Text>}
+          onPress={logout}
+          style={null}
+          animatedViewStyle={{backgroundColor: '#9a0612'}}
+        />  
+      </View>
+  </View>
   );
 }
 
@@ -109,7 +120,6 @@ const Styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-around',
   },
   title: {
     marginTop: 60,
@@ -141,4 +151,12 @@ const Styles = StyleSheet.create({
     padding: 4,
     color: '#E3E3E3',
   },
+  logOutButtonContainer : {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+  }
 });

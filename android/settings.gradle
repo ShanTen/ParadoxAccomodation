@@ -1,4 +1,4 @@
-rootProject.name = 'ParadoxAccommodation'
+rootProject.name = 'Accommodation'
 
 dependencyResolutionManagement {
   versionCatalogs {
