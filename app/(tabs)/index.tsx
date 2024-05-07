@@ -18,9 +18,8 @@ function StudentProfilePicture({url} : {url: string}){
   )
 }
 
-function UpcomingStudent({ id, name } : {id: string, name: string}) {
+function UpcomingStudent({ id, name, roomNumber } : {id: string, name: string, roomNumber: number|undefined}) {
   const [opacity] = useState(new Animated.Value(1));
-  const [roomNumber, setRoomNumber] = useState(Math.floor(Math.random()* 1000));
 
   const handlePressIn = () => {
     Animated.timing(opacity, {
@@ -49,9 +48,10 @@ function UpcomingStudent({ id, name } : {id: string, name: string}) {
         <Text id={id.toString()} style={styles.studentText}>
           {name}
         </Text>
-        <Text style={{...styles.studentText, marginLeft: 'auto'}}>
-          {roomNumber}
-        </Text>
+
+        {(roomNumber) && <Text style={{...styles.studentText, marginLeft: 'auto'}}>
+            {roomNumber}
+        </Text>}
       </Animated.View>
     </Pressable>
   );
@@ -60,11 +60,12 @@ function UpcomingStudent({ id, name } : {id: string, name: string}) {
 
 export default function TabOneScreen() {
     const navigation = useNavigation();
-    const [token, setToken] = useState("");
-    const [upcomingStudents, setUpcomingStudents] = useState([]);
-    const [selectedHostelID, setSelectedHostelID] = useState(null);
-    const [selectedHostelName, setSelectedHostelName] = useState("");
-    const [authorizedHostelsObject, setAuthorizedHostelsObject] = useState({});
+
+    const [token, setToken] = useState<string | null>(null);
+    const [upcomingStudents, setUpcomingStudents] = useState<any[]>();
+    const [authorizedHostelsObject, setAuthorizedHostelsArray] = useState<any>();
+    const [selectedHostelID, setSelectedHostelID] = useState<number | null>(null);
+    const [selectedHostelName, setSelectedHostelName] = useState<string | null>(null);
 
     useEffect(() => { 
         navigation.addListener('beforeRemove', (e) => {
@@ -87,20 +88,17 @@ export default function TabOneScreen() {
             axios.get(`${apiRoute}/accommodation/volunteer/profile/`, {headers}).then(
                 response => {
                     let {hostels} = response.data;
-                    console.log(hostels)
                     let initialID = hostels[0].id;
                     setSelectedHostelID(initialID);
-                    setAuthorizedHostelsObject(hostels);
+                    setAuthorizedHostelsArray(hostels); //array of objects
                 }
-            ).catch((err : any) => {console.log(err)}); 
+            ).catch((err : any) => {
+              console.log("Error while fetching profile details...");
+              console.log(err)
+            }
+          ); 
 
-            
-        // axios.get(`${apiRoute}/accommodation/hostel/upcoming/${hostelID}`, {headers: headers}).then((res : any) => {
-        //     console.log(`All students in hostel ${hostelID}`)
-        //     console.log(res.data);
-        //     setUpcomingStudents(res.data);
-        //   })
-        
+                  
         }).catch((err : any) => {
         console.log("Error while fetching token from store...")
         console.log(err);
@@ -108,7 +106,24 @@ export default function TabOneScreen() {
 
     }, []);
 
-    useEffect(()=>{}, [selectedHostelID])
+    //make request here to get upcoming students
+    useEffect(()=>{
+      if(!token  || !selectedHostelID || !authorizedHostelsObject){
+        return;
+      }
+
+      let headers = {Authorization : `Bearer ${token}`};
+      axios.get(`${apiRoute}/accommodation/hostel/upcoming/${selectedHostelID}`, {headers}).then(
+        response => {
+          setUpcomingStudents(response.data);
+        }
+      ).catch((err : any) => {
+        console.log("Error while fetching upcoming students...");
+        console.log(err);
+      });
+
+
+    }, [selectedHostelID])
 
   return (
     <View style={styles.container}>
@@ -122,18 +137,20 @@ export default function TabOneScreen() {
           <Picker
             style = {styles.pickerStyle}
             selectedValue={selectedHostelName}
-            onValueChange={(itemValue, itemIndex) =>
+            onValueChange={(itemValue) =>
               setSelectedHostelID(Number(itemValue))
             }>
-            <Picker.Item label="Saraswati" value="1" />
-            <Picker.Item label="Ganga" value="2" />
+            {authorizedHostelsObject && authorizedHostelsObject.map((v : any, i : number) => (
+              <Picker.Item key={i} label={v["name"]} value={v["id"]} />
+            ))}
           </Picker>
         </View>
-        {upcomingStudents.map((v : any, i) => (
+        {upcomingStudents && upcomingStudents.map((v : any, i) => (
           <UpcomingStudent 
             key={i} 
             id={v["email"].split("@")[0]} 
             name={v["name"]} 
+            roomNumber={v["roomNumber"] || undefined}
           />
         ))}
       </ScrollView>

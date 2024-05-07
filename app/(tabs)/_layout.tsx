@@ -59,6 +59,7 @@ export default function TabLayout() {
         name="TestScreen"
         options={{
           title: '',
+          href: null,
           tabBarIcon: ({ color }) => <TabBarIconFA name="cogs" color={color} />,
         }}
       />

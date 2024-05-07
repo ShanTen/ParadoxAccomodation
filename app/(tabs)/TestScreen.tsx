@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigation } from 'expo-router';
 import { getValueFor } from '../../ExpoStoreUtils';
 import { ButtonAnimatedWithChild } from '../CommonComponents/ButtonAnimated';
-
 import SupplyDisplay from '../CommonComponents/SelectableButtonArray';
+
+import { Picker } from '@react-native-picker/picker';
 
 import axios from 'axios';
 import apiRoute from '../../apiRoute';
@@ -43,21 +44,21 @@ const supplyState = [
     }
 ]
 
-function SupplyEntry({item , handleChange} : {item: {id: number, txt: string, isChecked: boolean}, handleChange: any}){
+function SupplyEntry({ item, handleChange }: { item: { id: number, txt: string, isChecked: boolean }, handleChange: any }) {
     return <View
         style={{
-        flexDirection: 'row',
-        flex: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        gap:10,
-        marginVertical: 2,
-        marginLeft: 10,
-        marginRight: 10,
-        marginTop: 5,
-        backgroundColor: '#1E1E1E',
+            flexDirection: 'row',
+            flex: 1,
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            gap: 10,
+            marginVertical: 2,
+            marginLeft: 10,
+            marginRight: 10,
+            marginTop: 5,
+            backgroundColor: '#1E1E1E',
         }}>
-        <Checkbox 
+        <Checkbox
             style={{
                 width: 30,
                 height: 30,
@@ -67,9 +68,9 @@ function SupplyEntry({item , handleChange} : {item: {id: number, txt: string, is
                 borderWidth: 2,
                 borderColor: 'coral',
                 backgroundColor: 'transparent',
-            }} 
-            value={item.isChecked} 
-            onValueChange={() => handleChange(item.id)} 
+            }}
+            value={item.isChecked}
+            onValueChange={() => handleChange(item.id)}
         />
         <Text style={{
             fontSize: 18,
@@ -80,22 +81,22 @@ function SupplyEntry({item , handleChange} : {item: {id: number, txt: string, is
         }}>
             {item.txt}
         </Text>
-  </View>
+    </View>
 }
 
-function SupplyEntryDisplay({supplies, handleChange} : {supplies: any, handleChange: any}){
-    return <ScrollView 
-    style={
-        {
-            width: '90%',
-            backgroundColor: '#1E1E1E',
-            borderRadius: 10,
-            paddingVertical: 10,
-    }} //end of style
+function SupplyEntryDisplay({ supplies, handleChange }: { supplies: any, handleChange: any }) {
+    return <ScrollView
+        style={
+            {
+                width: '90%',
+                backgroundColor: '#1E1E1E',
+                borderRadius: 10,
+                paddingVertical: 10,
+            }} //end of style
     >
         {
-            supplies.map((item : any) => {
-                return (<SupplyEntry key={item.id} item={item} handleChange={handleChange}/>)
+            supplies.map((item: any) => {
+                return (<SupplyEntry key={item.id} item={item} handleChange={handleChange} />)
             }) //end of map
         }
     </ScrollView>
@@ -104,19 +105,20 @@ function SupplyEntryDisplay({supplies, handleChange} : {supplies: any, handleCha
 
 export default function TestScreen() {
     const [supplies, setSupplies] = useState<any>([]);
-    
+    const [selectedLanguage, setSelectedLanguage] = useState('java');
+
     useEffect(() => {
         getValueFor('token').then(async (token) => {
-        let headers = {
-            "Authorization": `Bearer ${token}`
-        }
+            let headers = {
+                "Authorization": `Bearer ${token}`
+            }
 
-        let studentID = 2
+            let studentID = 2
 
-        try{
-                let response = await axios.get(`${apiRoute}/accommodation/student/${studentID}/supply/status`, {headers: headers})
+            try {
+                let response = await axios.get(`${apiRoute}/accommodation/student/${studentID}/supply/status`, { headers: headers })
                 let data = response.data;
-                let supplyData = data.map((item : any) => {
+                let supplyData = data.map((item: any) => {
                     return {
                         id: item["Item ID"],
                         txt: item["Item Name"],
@@ -124,8 +126,8 @@ export default function TestScreen() {
                     }
                 })
                 setSupplies(supplyData);
-                
-            } catch (error){
+
+            } catch (error) {
                 console.log("An error occurred while fetching supplies")
                 console.log(error)
 
@@ -134,20 +136,20 @@ export default function TestScreen() {
     }, [])
 
 
-    useEffect(()=>{
-    if(supplies.length === 0){
-        return ;
-    }
-        let selected = supplies.filter((supplies : any) => supplies.isChecked)
+    useEffect(() => {
+        if (supplies.length === 0) {
+            return;
+        }
+        let selected = supplies.filter((supplies: any) => supplies.isChecked)
         console.log(selected)
-    }, 
-    [supplies])
+    },
+        [supplies])
 
-    const handleChange = (id : number) => {
+    const handleChange = (id: number) => {
         console.log(`ID ${id} was smashed`)
-        let temp = supplies.map(((supply : any) => {
-            if(id === supply.id){
-                return {...supply, isChecked: !supply.isChecked}
+        let temp = supplies.map(((supply: any) => {
+            if (id === supply.id) {
+                return { ...supply, isChecked: !supply.isChecked }
             }
             return supply;
         }))
@@ -160,8 +162,41 @@ export default function TestScreen() {
             <Link href="/(tabs)/TestScreen" />
             <SupplyDisplay supplies={supplies} handleChange={handleChange} />
             <Text>
-                The selected items are {'['}{supplies.filter((supply : any) => supply.isChecked).map((supply : any) => supply.txt).join(', ')}{']'}
+                The selected items are {'['}{supplies.filter((supply: any) => supply.isChecked).map((supply: any) => supply.txt).join(', ')}{']'}
             </Text>
+            <View style = {
+                {
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#FAF9F6',
+                    borderWidth: 2, 
+                    borderColor: '#FAF9F6', 
+                    borderRadius: 4 
+                }
+            }>
+            <Picker
+                style={
+                    {
+                        width: '50%',
+                        backgroundColor: '#FAF9F6',
+                        margin: 2
+                    }
+                }
+
+                selectedValue={selectedLanguage}
+                onValueChange={(itemValue, itemIndex) =>
+                    setSelectedLanguage(itemValue)
+                }>
+                <Picker.Item label="Java" value="java" />
+                <Picker.Item label="JavaScript" value="js" />
+            </Picker>
+            </View>
+
+            <Text>
+                The selected language is {selectedLanguage}
+            </Text>
+
         </View>
     );
 }
