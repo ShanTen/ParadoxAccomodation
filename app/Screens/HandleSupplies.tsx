@@ -74,7 +74,10 @@ function epochToHuman(epochTime: number) {
     let date = new Date(epochTime).toLocaleDateString("en-IN");
     let buf_time = new Date(epochTime).toLocaleTimeString("en-IN");
     let time = getTimeWithoutSeconds(buf_time);
-    return `${time}, ${date}`;
+    let AM_OR_PM = time.split(" ")[1];
+    let timeWithoutAMPM = time.split(" ")[0];
+    return `${timeWithoutAMPM} ${AM_OR_PM}, ${date}`;
+    
 }
 
 function HostelInfo({ Name, RoomNum }: { Name: string, RoomNum: number }) {
@@ -362,7 +365,6 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
     return (<View style={Styles.container} >
         <Title value="Handle Supplies" />
         <ScrollView contentContainerStyle={Styles.ScrollContainer}>
-        <Link href='/Screens/HandleSupplies'></Link>
 
         {studentProfile && <ProfileBar profilePicture={studentProfile.profilePicture} profileName={studentProfile.profileName} uniqueID={studentProfile.uniqueID} />}
 

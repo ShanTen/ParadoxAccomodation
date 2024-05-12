@@ -1,12 +1,21 @@
 import { Text, View } from '@/components/Themed';
 
-export default function Title({value}: {value: string}){
+type TitleProps = {
+  value: string,
+  TextStyle?: any,
+  LineStyle?: any, //Put bottom margin here
+}
+
+export default function Title({value, TextStyle, LineStyle}: TitleProps){
   return (
     <>
       <Text style={{
-        marginTop: 60,
+        marginTop: 50,
         fontSize: 20,
-        fontWeight: 'bold',}}
+        fontWeight: 'bold',
+        textAlign: 'center',
+        ...TextStyle
+      }}
       >
         {value}
       </Text>
@@ -14,9 +23,9 @@ export default function Title({value}: {value: string}){
         marginVertical: 1,
         height: 1,
         width: '80%',
-        }} 
-        lightColor="#eee" 
-        darkColor="rgba(255,255,255,0.1)" 
+        backgroundColor: 'grey',
+        ...LineStyle
+        }}
       />
     </>
   )

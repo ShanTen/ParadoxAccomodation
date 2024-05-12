@@ -7,6 +7,7 @@ import ToastManager, { Toast } from 'toastify-react-native'
 import apiRoute from '../apiRoute';
 import axios from 'axios';
 import { save, getValueFor } from '../ExpoStoreUtils';
+import PageTitle from './CommonComponents/PageTitle';
 
 /* This squiggly little bastard won't go away no matter what I do. 
     Why? has I ever? */
@@ -153,9 +154,7 @@ export default function Login() {
         
         <View style={styles.container}>
             <View>
-                <Text style={styles.title}>Volunteer Login</Text>
-                <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-                <Link href='/'></Link>
+                <PageTitle value='Volunteer Login' />
             </View>
 
             <View>

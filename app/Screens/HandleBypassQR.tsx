@@ -8,9 +8,10 @@ import { StyleSheet , TextInput } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import apiRoute from '../../apiRoute';
-import { getValueFor } from '../../ExpoStoreUtils';
 import { ButtonAnimatedWithLabel } from '../CommonComponents/ButtonAnimated';
+
+import apiRoute from '@/apiRoute';
+import { getValueFor } from '@/ExpoStoreUtils';
 
 export default function ScreenBypassQR({ route, navigation }: { route: any, navigation: any }){
     //Words cannot describe how  much this code wants to make me gouge my eyes out 

@@ -128,7 +128,6 @@ export default function TabOneScreen() {
   return (
     <View style={styles.container}>
       <Title value='Upcoming Students'/>
-      <Link href="/(tabs)" />
       <ScrollView style={styles.studentsDisplayContainer}>
         {/* {Array.from(Array(30).keys()).map((i) => (
           <UpcomingStudent key={i} id={i.toString()} name={`Student ${i}`} />

@@ -216,6 +216,7 @@ const Styles = StyleSheet.create({
         marginVertical: 1,
         height: 1,
         width: '80%',
+        backgroundColor: 'grey',
     },
     Text: {
         fontSize: 18,

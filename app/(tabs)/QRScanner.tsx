@@ -9,6 +9,10 @@
           - QR Scanner (Home)
           - HandleSupplies (Home -> OTP Supplies)
           - OTPSupplies (OTP Supplies -> Home)
+
+  Note:
+    Fails on expo Camera version >= 15.x
+    Works on expo Camera version ~ 14
 */
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -73,10 +77,18 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   const [QRid , setQRid] = React.useState<string | null>(null)
   const [mountKey, setMountKey] = React.useState(0); //camera hack to force remount
   const [isLit, setLit] = React.useState(false);
+  // set camera permissions
 
-  //Initial render only
+  const permissionFunction = async () => {
+    // here is how you can get the camera permission
+    const cameraPermission = await Camera.requestCameraPermissionsAsync();
+    setIsVisible(cameraPermission.status === 'granted');
+    if (cameraPermission.status !== 'granted') 
+      alert('Permission for camera access needed.');
+  };
+
   useEffect(() => {
-    setMountKey(mountKey + 1);
+    permissionFunction();
   }, []);
 
   //Subsequent focus renders

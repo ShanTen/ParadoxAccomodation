@@ -4112,6 +4112,14 @@ expo-modules-core@1.11.12:
   dependencies:
     invariant "^2.2.4"
 
+expo-navigation-bar@~2.8.1:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/expo-navigation-bar/-/expo-navigation-bar-2.8.1.tgz#c4152f878d9fb6ca74c90b80e934af76c29b5377"
+  integrity sha512-aT5G+7SUsXDVPsRwp8fF940ycka1ABb4g3QKvTZN3YP6kMWvsiYEmRqMIJVy0zUr/i6bxBG1ZergkXimWrFt3w==
+  dependencies:
+    "@react-native/normalize-color" "^2.0.0"
+    debug "^4.3.2"
+
 expo-router@~3.4.8:
   version "3.4.8"
   resolved "https://registry.npmjs.org/expo-router/-/expo-router-3.4.8.tgz"
@@ -7976,7 +7984,7 @@ to-regex-range@^5.0.1:
 
 toastify-react-native@^5.0.0:
   version "5.0.0"
-  resolved "https://registry.npmjs.org/toastify-react-native/-/toastify-react-native-5.0.0.tgz"
+  resolved "https://registry.yarnpkg.com/toastify-react-native/-/toastify-react-native-5.0.0.tgz#4154087f6de015046a289b07f808e016059f05b0"
   integrity sha512-TmkoAb8bH6z0mUoUijm1Fm3BiUESosW3itSL6Wi12waJzzCU4sA2jipinyKTdTVNdpKrNQXYJFhLxk8Qt645sg==
 
 toidentifier@1.0.1:

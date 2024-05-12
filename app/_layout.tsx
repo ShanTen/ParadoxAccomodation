@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from '@/components/useColorScheme';
+import * as NavigationBar from 'expo-navigation-bar';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,6 +28,8 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+
+
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
@@ -37,6 +40,16 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  const visibility = NavigationBar.useVisibility()
+  
+  useEffect(() => {
+    if(visibility) {
+      NavigationBar.setBackgroundColorAsync('#181818')
+      .then(() => console.log('Navigation bar color set'))
+      .catch((error) => console.log(error))
+    }
+  }, [visibility])
 
   if (!loaded) {
     return null;
@@ -49,7 +62,7 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DarkTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
