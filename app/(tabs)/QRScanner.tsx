@@ -27,19 +27,19 @@ import { StatusBar, StyleSheet, Text, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 
-import apiRoute from '../../apiRoute';
-import { getValueFor } from '../../ExpoStoreUtils';
+import apiRoute from '@/apiRoute';
+import { getValueFor } from '@/ExpoStoreUtils';
 import axios from 'axios';
 
-import { Camera } from '../CommonComponents/Camera';
-import QRFooterButton from '../CommonComponents/QRFooterButton';
-import QRIndicator from '../CommonComponents/QRIndicator';
+import { Camera } from '@/app/CommonComponents/Camera';
+import QRFooterButton from '@/app/CommonComponents/QRFooterButton';
+import QRIndicator from '@/app/CommonComponents/QRIndicator';
 
 /* Navigation Handler For Post QR Scan */
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HandleSupplies from '../Screens/HandleSupplies';
-import OTPSupply from '../Screens/OTPSupply';
-import HandleBypassQR from '../Screens/HandleBypassQR';
+import HandleSupplies from '@/app/Screens/HandleSupplies';
+import OTPSupply from '@/app/Screens/OTPSupply';
+import HandleBypassQR from '@/app/Screens/HandleBypassQR';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////// Navigation Handler For Post QR Scan /////////////////////
