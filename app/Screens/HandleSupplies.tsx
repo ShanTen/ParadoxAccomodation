@@ -74,7 +74,7 @@ function epochToHuman(epochTime: number) {
     let date = new Date(epochTime).toLocaleDateString("en-IN");
     let buf_time = new Date(epochTime).toLocaleTimeString("en-IN");
     let time = getTimeWithoutSeconds(buf_time);
-    let AM_OR_PM = time.split(" ")[1];
+    let AM_OR_PM = buf_time.split(" ")[1];
     let timeWithoutAMPM = time.split(" ")[0];
     return `${timeWithoutAMPM} ${AM_OR_PM}, ${date}`;
     
@@ -310,6 +310,15 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
             'supplies' : checkOutSupplies,
         }
         setOTPTransferObject(buffer)
+        
+        checkOutSupplies.filter((item : any) => {
+            if(item["isProvided"] && !item["isReturned"]){
+                setShowCheckOutSuppliesButton(true);
+                return;
+            }
+        })
+
+
     }, [checkOutSupplies])
 
     useEffect(()=>{
@@ -492,10 +501,8 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
             }}
             style={{}}
             animatedViewStyle={{ backgroundColor: '#fa8b05' }}
-            //is disabled when there are no provided items or when the number of non-provided items is 0
-            isDisabled={
-                !(getProvidedItems(checkInSupplies).length !== 0) || getNonProvidedItems(checkInSupplies).length === 0
-            }
+            /*disabled when no items are checkedIN or all items are checkedOut*/
+            isDisabled={!showCheckOutSuppliesButton}
         />}
         </View>}
 
