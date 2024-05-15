@@ -225,9 +225,10 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
                     // console.log(item)
                     return {...item, isChecked: true, isDisabled: true}
                 }
-                    
-                else
-                    return item;
+                else{
+                    //enable all items that are not provided
+                    return {...item, isDisabled: false} 
+                }
             })
 
             // disable + check = all items that are provided and returned
@@ -244,6 +245,13 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
                 }
                 return item;
             });
+
+            //disable all items when user is not checked in
+            if(CheckInCheckOutInfo.checkInStatus === false){
+                _checkInSupplies = _checkInSupplies.map((item : any) => {
+                    return {...item, isDisabled: true}
+                })
+            }
 
             //disable all items when user is checked out
             if(CheckInCheckOutInfo.checkOutStatus){
@@ -305,6 +313,20 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
         if(!checkInCheckOutInfo){
             return
         }
+
+        if(checkInCheckOutInfo.checkInStatus === true){
+            //enable all states that havent been checked
+            let _checkInSupplies = checkInSupplies.map((item : any) => {
+                if(item["isProvided"])
+                    return {...item, isChecked: true, isDisabled: true}
+                else
+                    return {...item, isDisabled: false} 
+            }) //End of Map function
+
+            setCheckInSupplies(_checkInSupplies);
+
+        } //End of Check for CheckInStatus
+
         //show the checkIn Supplies Button if the student has checked in and not checked out
         if(checkInCheckOutInfo.checkInStatus && !checkInCheckOutInfo.checkOutStatus){
             setShowCheckInSuppliesButton(true);
@@ -617,9 +639,9 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
 
         {
             (checkInCheckOutInfo?.checkOutStatus === true) && <Text
-                style={{marginTop: 10, color: 'red', fontSize: 16, fontWeight: 'bold'}}
+                style={{marginTop: 10, color: 'red', fontSize: 16, fontWeight: 'bold', textAlign: 'center'}}
             >
-                Lodger has already been checked out
+                Lodger checked out at {checkInCheckOutInfo?.checkOutTime ? epochToHuman(checkInCheckOutInfo?.checkOutTime) : "Unknown Time"}
                 </Text>
         }
 
