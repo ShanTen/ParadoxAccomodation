@@ -25,7 +25,7 @@ import { throttle } from 'lodash';
 import React, { useEffect } from 'react';
 import { StatusBar, StyleSheet, Text, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 
 import apiRoute from '@/apiRoute';
 import { getValueFor } from '@/ExpoStoreUtils';
@@ -77,12 +77,14 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   const [QRid , setQRid] = React.useState<string | null>(null)
   const [mountKey, setMountKey] = React.useState(0); //camera hack to force remount
   const [isLit, setLit] = React.useState(false);
+  const [isPermissionGranted, setPermission] = React.useState(false);
   // set camera permissions
 
   const permissionFunction = async () => {
     // here is how you can get the camera permission
     const cameraPermission = await Camera.requestCameraPermissionsAsync();
     setIsVisible(cameraPermission.status === 'granted');
+    setPermission(cameraPermission.status === 'granted');
     if (cameraPermission.status !== 'granted') 
       alert('Permission for camera access needed.');
   };
@@ -90,11 +92,6 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   useEffect(() => {
     permissionFunction();
   }, []);
-
-  //Subsequent focus renders
-  useFocusEffect(React.useCallback(() => {
-    setMountKey(mountKey + 1);
-  }, []));
 
   React.useEffect(() => {
     if (!isVisible && QRid) {
@@ -139,7 +136,7 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   }, 1000);
 
   // InstanceOf : [props.navigation]
-  const onRefresh = React.useCallback(() => {
+  const onCancel = React.useCallback(() => {
     console.log("Action Cancelled")
     //clear all states
     setQRid(null);
@@ -160,11 +157,12 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   }, []);
 
   const { top, bottom } = useSafeAreaInsets();
+  const isFocused = useIsFocused();
 
   return (
     <View style={Styles.container}>
       {/* // InstanceOf : [state] */}
-      {isVisible ? (
+      {(isVisible && isFocused) ? (
         <Camera
           key={mountKey}
           barCodeScannerSettings={{
@@ -184,7 +182,7 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
       <View style={[Styles.footer, { bottom: 30 + bottom }]}>
         <QRFooterButton onPress={onFlashToggle} isActive={isLit} iconName="flashlight" />
         <QRFooterButton onPress={onManualEntry} iconName="create-outline" />
-        <QRFooterButton onPress={onRefresh} iconName="refresh-outline" iconSize={48} />
+        <QRFooterButton onPress={onCancel} iconName="refresh-outline" iconSize={48} />
       </View>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
     </View>
