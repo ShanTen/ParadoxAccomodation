@@ -42,6 +42,7 @@ function UpcomingStudent({ id, name, roomNumber }: { id: string, name: string, r
     <Pressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      disabled={true}
       style={{ ...styles.upcomingStudentPressable }}>
       <Animated.View style={{ ...styles.studentContainer, opacity }}>
         <StudentProfilePicture url={`https://ui-avatars.com/api/?name=${name}&background=1a1a00&color=ffffff`} />
@@ -130,24 +131,6 @@ export default function TabOneScreen() {
     <View style={styles.container}>
       <Title value='Upcoming Students' />
       <ScrollView style={styles.studentsDisplayContainer}>
-        {/* {Array.from(Array(30).keys()).map((i) => (
-          <UpcomingStudent key={i} id={i.toString()} name={`Student ${i}`} />
-        ))} */}
-        {/* <View style = {styles.pickerContainer}>
-
-          <Picker
-            style = {styles.pickerStyle}
-
-            selectedValue={selectedHostelName}
-            onValueChange={(itemValue) => setSelectedHostelID(itemValue)}>
-
-            {assignedHostels && assignedHostels.map((v : any, i : number) => (
-              <Picker.Item key={i} label={v["name"]} value={v["id"]} />
-            ))}
-          </Picker>
-
-        </View> */}
-
         {(assignedHostels) && <View style={{
           margin: 10,
           flexDirection: 'row',
