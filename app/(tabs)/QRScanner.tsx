@@ -139,7 +139,7 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   }, 1000);
 
   // InstanceOf : [props.navigation]
-  const onCancel = React.useCallback(() => {
+  const onRefresh = React.useCallback(() => {
     console.log("Action Cancelled")
     //clear all states
     setQRid(null);
@@ -184,7 +184,7 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
       <View style={[Styles.footer, { bottom: 30 + bottom }]}>
         <QRFooterButton onPress={onFlashToggle} isActive={isLit} iconName="flashlight" />
         <QRFooterButton onPress={onManualEntry} iconName="create-outline" />
-        <QRFooterButton onPress={onCancel} iconName="refresh-outline" iconSize={48} />
+        <QRFooterButton onPress={onRefresh} iconName="refresh-outline" iconSize={48} />
       </View>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
     </View>
