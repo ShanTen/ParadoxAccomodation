@@ -78,6 +78,7 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   const [mountKey, setMountKey] = React.useState(0); //camera hack to force remount
   const [isLit, setLit] = React.useState(false);
   const [isPermissionGranted, setPermission] = React.useState(false);
+  const isFocused = useIsFocused();
   // set camera permissions
 
   const permissionFunction = async () => {
@@ -157,7 +158,6 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
   }, []);
 
   const { top, bottom } = useSafeAreaInsets();
-  const isFocused = useIsFocused();
 
   return (
     <View style={Styles.container}>
