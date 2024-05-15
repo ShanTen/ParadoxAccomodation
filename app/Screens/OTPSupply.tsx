@@ -74,8 +74,6 @@ function SendOTPRequestForConfirmedItems(token: string, studentProfile: any, con
 ////////////////////////////////// Main OTP Screen  /////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 export default function OTPSupply({  navigation }: { navigation: any }) {
     const [studentProfile, setStudentProfile] = useState<any | null>(null);
     const [token, setToken] = useState<string | null>(null);
@@ -88,6 +86,7 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
     const [mode, setMode] = useState<string | null>(null);
     const [sendOTP, setSendOTP] = useState<boolean>(false);
 
+    const [mountKey, setMountKey] = useState<number>(0);
     const [resetOTPSupply, setResetOTPSupply] = useState<boolean>(false);
 
     
@@ -119,6 +118,7 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
         })
     }, []);
 
+    //Calls OTP service when sendOTP is true -- Requests for OTP to be sent to student
     useEffect(()=>{
         if(sendOTP){
             if(studentProfile && token && supplies && QRid && mode!=null){
@@ -184,10 +184,13 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
 
     useEffect(() => {
         if(resetOTPSupply){
+
             setOTP(null);
             setEnableSubmitOTP(false);
+            setMountKey(mountKey + 1);
+
+            setResetOTPSupply(false);
         }
-        setResetOTPSupply(false);
     }, [resetOTPSupply]);
 
     return (
@@ -196,6 +199,7 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
             <ShowStaticConfirmation items={supplies}></ShowStaticConfirmation>
 
             <OtpInput
+                key={mountKey}
                 numberOfDigits={6}
                 focusColor="green"
                 focusStickBlinkingDuration={500}
@@ -207,9 +211,8 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
                             setOTP(parseInt(code));
                         else
                             {
-                                setOTP(null);
-                                setEnableSubmitOTP(false);
                                 Alert.alert("Invalid OTP", "Please enter a valid OTP")
+                                setResetOTPSupply(true);
                             }
                         }
                 }
@@ -248,14 +251,27 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
                         ]);
                     } //end of try block
                     catch(err){
-                        /*
-                            TODO: 
-                                1. Allow user to retry OTP submission
-                        */
-
                         console.log("An error occurred while verifying OTP") 
                         console.log(err)
-                        navigation.navigate('Home');
+
+                        Alert.alert("Error", "Invalid one time password", [
+                            {
+                                text: "Go Back",
+                                onPress: () => {
+                                    navigation.navigate('HandleSupplies', { QRid }); 
+                                },
+                            },
+                            {
+                                text: "Try Again",
+                                onPress: () => {
+                                    setResetOTPSupply(true);
+                                },
+                            },
+                        ]);
+                        
+
+
+                        //navigation.navigate('Home');
                     } //end of catch block
                 }}
                 style={styles.button}
@@ -265,7 +281,7 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
 
             <ButtonAnimatedWithLabel
                 label="Cancel"
-                onPress={() => {navigation.navigate('Home', {QRid})}}
+                onPress={() => {navigation.navigate('HandleSupplies', {QRid})}}
                 style={styles.button}
                 animatedViewStyle={{backgroundColor: '#9a0612'}}
             />    
