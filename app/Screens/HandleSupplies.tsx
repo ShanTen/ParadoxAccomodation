@@ -16,6 +16,9 @@ import {ButtonAnimatedWithLabel} from '../CommonComponents/ButtonAnimated';
 import SupplyDisplay from '../CommonComponents/SelectableButtonArray';
 import Title from '../CommonComponents/PageTitle';
 
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// Custom Types  Supplies Page ////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,11 +140,33 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
         return nonProvidedItems;
     }
 
-    async function getAllInfo(QRid : string){
+    function getReturnedItems(supplies : any){
+        //if provided items are none, it returns an empty array
+
+        let returnedItems = supplies.filter((item : any) => {
+            return item["isReturned"]
+        })
+
+        return returnedItems;
+    }
+
+    function getNonReturnedItems(supplies : any){
+        //if provided items are none, it returns an empty array
+
+        let nonReturnedItems = supplies.filter((item : any) => {
+            return !item["isReturned"]
+        })
+
+        return nonReturnedItems;
+    }
+
+    async function getAllInfo(_QRid : string){
+        setQRid(_QRid);
+
         let _token = await getValueFor('token');
         let headers ={Authorization : `Bearer ${_token}`}    
         try{
-            let profile_buffer = (await axios.get(`${apiRoute}/accommodation/qr/${QRid}`, {headers})).data;
+            let profile_buffer = (await axios.get(`${apiRoute}/accommodation/qr/${_QRid}`, {headers})).data;
             let checkInCheckOutStatus = (await axios.get(`${apiRoute}/accommodation/student/${profile_buffer.id}/checkin/status`, {headers})).data;
             let supplies = (await axios.get(`${apiRoute}/accommodation/student/${profile_buffer.id}/supply/status`, {headers})).data
             let hostelInfoClump = (await axios.get(`${apiRoute}/accommodation/student/id/${profile_buffer.id}`, {headers})).data;
@@ -259,19 +284,21 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
     }
 
     // Run on Page Load
-    useEffect(() => {        
-        setQRid(route.params.QRid);
-    }, []); 
+    useFocusEffect(
+        useCallback(() => {
 
-    useEffect(() => {
-        if(QRid != null){
-            getAllInfo(QRid).then(() => {
-                console.log("All Info Fetched")
+            console.log("Called page load of Handle Supplies Page")
+            console.log(route.params.QRid)
+
+            getAllInfo(route.params.QRid).then(() => {
+                console.log("All Info Fetched from useFocusEffect")
             }).catch((err) => {
                 console.log(err)
             })
-        }
-    }, [QRid]);         
+            
+
+        }, [])
+    )       
 
     useEffect(() => {
 
@@ -284,6 +311,27 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
             setShowCheckIn(false);
         }
 
+        //dont show checkIn Supplies Button if the student has checked out
+        if(checkInCheckOutInfo.checkOutStatus === true){
+            setShowCheckInSuppliesButton(false);
+            setShowCheckIn(false);
+            setShowCheckOutSuppliesButton(false);
+            setShowCheckOut(false);
+
+            //update states of all checkboxes
+
+            //disable all items when user is checked out
+            let _checkInSupplies = checkInSupplies.map((item : any) => {
+                return {...item, isDisabled: true}
+            });
+
+            let _checkOutSupplies = checkOutSupplies.map((item : any) => {
+                return {...item, isDisabled: true}
+            });
+
+            setCheckInSupplies(_checkInSupplies);
+            setCheckOutSupplies(_checkOutSupplies);
+        }
 
     }, [checkInCheckOutInfo])
 
@@ -297,6 +345,20 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
             'studentProfile' : studentProfile,
             'supplies' : checkInSupplies,
         }
+
+        checkInSupplies.filter((item : any) => {
+            if(item["isProvided"] && !item["isReturned"] && item["isChecked"]){
+                setShowCheckInSuppliesButton(true);
+                return;
+            }
+        })
+
+        if(getNonProvidedItems(checkInSupplies).length === 0) {
+            console.log("All items have been checked in")
+            console.log("Disabling Check In Supplies Button")
+            setShowCheckInSuppliesButton(false)
+        }
+
         setOTPTransferObject(buffer)
     }, [checkInSupplies])
 
@@ -318,6 +380,12 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
             }
         })
 
+        if(getNonReturnedItems(checkOutSupplies).length === 0) {
+            console.log("All items have been checked out")
+            console.log("Disabling Check Out Supplies Button")
+            setShowCheckOutSuppliesButton(false)
+        }
+            
 
     }, [checkOutSupplies])
 
@@ -369,6 +437,24 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
                 Alert.alert("Error", "Check In Failed")
             }
         }        
+    }
+
+    const makeCheckOutRequest = async () => {
+        console.log("Checking Out...")
+        if(studentProfile && token && checkInCheckOutInfo){
+            let id = studentProfile?.id;
+            let headers = {Authorization : `Bearer ${token}`}
+            try{
+                let response = (await axios.put(`${apiRoute}/accommodation/student/${id}/checkout/`, {}, {headers})).data;
+                console.log("Log out response is")
+                console.log(response)
+                setCheckInCheckOutInfo({...checkInCheckOutInfo, checkOutStatus: true, checkOutTime: getCurrentEpochTimeMS()});
+            }
+            catch(err){
+                console.log(err);
+                Alert.alert("Error", "Check Out Failed")
+            }
+        }
     }
 
     return (<View style={Styles.container} >
@@ -515,21 +601,7 @@ export default function HandleSuppliesPage({ route, navigation }: { route: any, 
                     {
                         text: "Yes",
                         onPress: async () => {
-                            console.log("Checking Out...")
-                            if(studentProfile && token){
-                                let id = studentProfile?.id;
-                                let headers = {Authorization : `Bearer ${token}`}
-                                try{
-                                    let response = (await axios.put(`${apiRoute}/accommodation/student/${id}/checkout/`, {}, {headers})).data;
-                                    console.log("Log out response is")
-                                    console.log(response)
-                                    navigation.navigate('Home');
-                                }
-                                catch(err){
-                                    console.log(err);
-                                    Alert.alert("Error", "Check Out Failed")
-                                }
-                            }
+                            await makeCheckOutRequest();
                         }
                     },
                     {

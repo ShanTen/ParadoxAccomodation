@@ -40,7 +40,7 @@ function ShowStaticConfirmation( {items}: {items: any[]} ) {
     )
 }
 
-function SendOTPRequestForConfirmedItems(token: string, studentProfile: any, confirmedItems: any, giveOrReturn: string, onConfirmed: any) {
+function SendOTPRequestForConfirmedItems(token: string, studentProfile: any, confirmedItems: any, giveOrReturn: string, onConfirmed: any, onError?: any) {
     let headers = {
         Authorization: `Bearer ${token}`,
     };
@@ -64,6 +64,8 @@ function SendOTPRequestForConfirmedItems(token: string, studentProfile: any, con
     .catch((error) => {
         console.log("An error occurred while sending OTP")
         console.log(error)
+        if(onError)
+            onError(error);
         return null;
     });
 }
@@ -84,8 +86,10 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
     const [QRid, setQRid] = useState<string | null>(null);
     const [enableSubmitOTP, setEnableSubmitOTP] = useState<boolean>(false);
     const [mode, setMode] = useState<string | null>(null);
-
     const [sendOTP, setSendOTP] = useState<boolean>(false);
+
+    const [resetOTPSupply, setResetOTPSupply] = useState<boolean>(false);
+
     
     useEffect(() => {    
         getValueFor('OTP_TRANSFER_OBJ').then(async (value : any) => {
@@ -142,7 +146,14 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
                     console.log(data)
                 }
 
-                SendOTPRequestForConfirmedItems(token, studentProfile, supplies, mode, onOTPConfirm);
+                let onOTPError = (error : any) => {
+                    console.log("An error occurred while sending OTP")
+                    console.log(error)
+                    Alert.alert("Error", "An error occurred while sending OTP. Please try again.")
+                    navigation.navigate('HandleSupplies', { QRid });
+                }
+
+                SendOTPRequestForConfirmedItems(token, studentProfile, supplies, mode, onOTPConfirm, onOTPError);
                 setSendOTP(false);
             }
             else{
@@ -166,11 +177,18 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
         console.log("Send OTP is false")
     },[sendOTP]);
     
-
     useEffect(() => {
         if(OTP && OTP !== null)
             setEnableSubmitOTP(true);
     }, [OTP]);
+
+    useEffect(() => {
+        if(resetOTPSupply){
+            setOTP(null);
+            setEnableSubmitOTP(false);
+        }
+        setResetOTPSupply(false);
+    }, [resetOTPSupply]);
 
     return (
         <View style={styles.container}>
@@ -223,11 +241,18 @@ export default function OTPSupply({  navigation }: { navigation: any }) {
                         Alert.alert("OTP Submitted", "You have successfully submitted the OTP", [
                             {
                                 text: "OK",
-                                onPress: () => navigation.navigate('Home'),
+                                onPress: () => {
+                                    navigation.navigate('HandleSupplies', { QRid }); 
+                                },
                             },
                         ]);
                     } //end of try block
                     catch(err){
+                        /*
+                            TODO: 
+                                1. Allow user to retry OTP submission
+                        */
+
                         console.log("An error occurred while verifying OTP") 
                         console.log(err)
                         navigation.navigate('Home');
