@@ -1,4 +1,5 @@
 /*Expo Go's QR Scanner Screen Implementation for Accommodator App
+  https://github.com/expo/expo/blob/main/apps/expo-go/src/screens/QRCodeScreen.tsx
 
     ToDo:
     - Overhaul their state object and create my own state implementations -- done
@@ -69,9 +70,6 @@ function Hint({ children }: { children: string }) {
 //////////////////////// Main Export Method ///////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// const initialState: State = { isVisible: Platform.OS === 'ios', url: null };
-// defaults to {isVisible: false, url: null} on Android
-
 function BarCodeScreen({ navigation }: { navigation: any }) {
   const [isVisible , setIsVisible] = React.useState(false)
   const [QRid , setQRid] = React.useState<string | null>(null)
@@ -129,14 +127,12 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
     }
   }, [isVisible, QRid]);
 
-  // InstanceOf : [state]
   const _handleBarCodeScanned = throttle(({ data: _url }) => {
     console.log("Scanned URL: ", _url)
     setQRid(_url);
     setIsVisible(false);
   }, 1000);
 
-  // InstanceOf : [props.navigation]
   const onCancel = React.useCallback(() => {
     console.log("Action Cancelled")
     //clear all states
@@ -161,10 +157,11 @@ function BarCodeScreen({ navigation }: { navigation: any }) {
 
   return (
     <View style={Styles.container}>
-      {/* // InstanceOf : [state] */}
+      
       {(isVisible && isFocused) ? (
         <Camera
           key={mountKey}
+          ratio="16:9"
           barCodeScannerSettings={{
             barCodeTypes: [BarCodeScanner.Constants.BarCodeType.qr],
           }}
