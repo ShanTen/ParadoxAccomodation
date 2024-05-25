@@ -1,4 +1,3 @@
-// note(bacon): Purposefully skip using the themed icons since we want the icons to change color based on toggle state.
 import Ionicons from '@expo/vector-icons/build/Ionicons';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
